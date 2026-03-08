@@ -1,0 +1,48 @@
+在生产环境中我们一般不会使用默认 bridge，而是创建自定义 bridge 网络，这样容器之间可以通过容器名进行 DNS 解析和服务发现。
+Docker 常见有四种网络模式：bridge、host、none 和 container。
+其中 bridge 是默认模式，通过虚拟网桥实现容器之间通信，并支持端口映射；
+host 模式是容器直接使用宿主机网络，性能最好但没有隔离；none 模式表示容器没有网络；
+container 模式是多个容器共享同一个网络空间。
+
+在生产环境中，我们一般使用自定义 bridge 网络来实现容器之间的服务通信。
+每个容器跑在不同的物理机/宿主机上，容器之间的通信就不能靠 Docker 自定义 bridge 网络了，因为 bridge 网络 只在同一台宿主机内部有效。
+Spring Boot 应用本质上是一个可执行 Jar 包，可以用 Maven 或 Gradle 打包
+
+Overlay 网络是 Docker 提供的一种 跨主机容器通信网络。它允许：
+不同物理机上的容器像在同一个局域网里一样通信。使用 容器名作为 DNS 访问服务
+
+Overlay 网络的核心技术：
+
+VXLAN 封装
+容器网络的数据包被封装成 UDP 数据包，通过物理网络传输到另一台宿主机
+
+Docker 内部路由
+Docker 在各宿主机上部署 Swarm Node，负责将 Overlay 网络流量路由到目标容器
+
+内部 DNS
+Overlay 网络提供内置 DNS，容器可以直接用容器名访问同一 Overlay 网络里的其他容器
+
+
+一、代码容器化
+1.写dockerfile
+2.docker build -t 构建镜像
+3.docker tag 给镜像打标签，然后docker push推送私有镜像仓库（如Harbor/Docker Registry）
+
+二、数据库链接
+数据库单独部署在独立服务器上（或容器），应用通过配置文件或环境变量指定数据库地址
+如果数据库在容器中，则把应用和数据库放在同一个 Docker 网络，容器通过 容器名 + 端口 访问
+
+三、网络
+自定义 bridge 网络支持容器名 DNS 解析，容器间通信稳定可靠（自定义 bridge 网络可让容器通过 容器名直接访问服务）
+docker network create
+
+四、资源限制（必须补充）
+防止容器占满服务器资源
+
+
+Git 提交 → Jenkins 构建 → Maven 打包 → Docker 构建镜像 → 镜像推送 Harbor → 服务器拉取镜像 → 启动容器 → 健康检查 → 监控
+
+Java应用容器化
+配置管理
+
+
